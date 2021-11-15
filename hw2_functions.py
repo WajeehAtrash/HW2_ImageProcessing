@@ -10,34 +10,55 @@ import matplotlib.pyplot as plt
 #     for im in image_list:
 #         out.write(im)
 #     out.release()
-#
-#
-# def createMorphSequence (im1, im1_pts, im2, im2_pts, t_list, transformType):
-#     if transformType:
-#         # TODO: projective transforms
-#     else:
-#         # TODO: affine transforms
-#     ims = []
-#     for t in t_list:
-#         # TODO: calculate nim for each t
-# 		ims.append(nim)
-#     return ims
-#
-#
+
+
+def createMorphSequence (im1, im1_pts, im2, im2_pts, t_list, transformType):
+    if transformType:
+        #TODO: projective transforms
+        T12=findProjectiveTransform(im1_pts,im2_pts)
+        T21=findProjectiveTransform(im2_pts,im1_pts)
+    else:
+        # TODO: affine transforms
+        T12 = findAffineTransform(im1_pts, im2_pts)
+        T21 = findAffineTransform(im2_pts, im1_pts)
+    ims = []
+    for t in t_list:
+        # TODO: calculate nim for each t
+        T12_t=(1-t)*np.eye(3)+t*T12
+        T21_t=(1-t)*T21+t*np.eye(3)
+        newIm1=mapImage(im1,T12_t,im2)
+        newIm2=mapImage(im2,T21_t,im1)
+        nim=t*newIm1+(1-t)*newIm2
+        ims.append(nim)
+    return ims
+
+
+
 def mapImage(im, T, sizeOutIm):
 
-	im_new = np.zeros(sizeOutIm)
+    im_new = np.zeros(sizeOutIm)
+    im_new_rows,im_new_cols=sizeOutIm[0],sizeOutIm[1]
+    T_inv=np.linalg.inv(T)
     # create meshgrid of all coordinates in new image [x,y]
-
-
+    x = np.arange(0,im_new_rows, 1)
+    y = np.arange(0, im_new_cols, 1)
+    mesh_gridx, mesh_gridy =np.meshgrid(x, y)
     # add homogenous coord [x,y,1]
-
-
-    # calculate source coordinates that correspond to [x,y,1] in new image
-
-
+    mesh_gridx = mesh_gridx.ravel()
+    mesh_gridy = mesh_gridy.ravel()
+    ones_vec = np.ones((1, sizeOutIm[0] * sizeOutIm[1]))
+    hom_coordinates=np.vstack((mesh_gridx,mesh_gridy,ones_vec))
+    hom_coordinates=np.transpose(hom_coordinates)
+    # calculate source coordinates that correspond to [x,y,1] in new imag
+    mapped_coordinate=np.matmul(hom_coordinates,T_inv)
     # find coordinates outside range and delete (in source and target)
-
+    mapped_coordinate[:,0]=mapped_coordinate[:,0]/mapped_coordinate[:,2]
+    mapped_coordinate[:, 1] = mapped_coordinate[:, 1] / mapped_coordinate[:, 2]
+    mapped_coordinate[:, 2] = mapped_coordinate[:, 2] / mapped_coordinate[:, 2]
+    print(np.any(mapped_coordinate[:,0]<-4))
+    # mapped_coordinate=np.delete(mapped_coordinate,np.any(mapped_coordinate[:,0]<-4),axis=0)
+    print(np.all(mapped_coordinate))
+    input()
 
     # interpolate - bilinear
 
