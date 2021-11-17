@@ -26,8 +26,10 @@ def createMorphSequence (im1, im1_pts, im2, im2_pts, t_list, transformType):
         # TODO: calculate nim for each t
         T12_t=(1-t)*np.eye(3)+t*T12
         T21_t=(1-t)*T21+t*np.eye(3)
-        newIm1=mapImage(im1,T12_t,im2)
-        newIm2=mapImage(im2,T21_t,im1)
+        im1_row,im1_col=im1.shape
+        im2_row, im2_col = im2.shape
+        newIm1=mapImage(im1,T12_t,[im2_row,im2_col])
+        newIm2=mapImage(im2,T21_t,[im1_row,im1_col])
         nim=t*newIm1+(1-t)*newIm2
         ims.append(nim)
     return ims
@@ -55,12 +57,13 @@ def mapImage(im, T, sizeOutIm):
     # find coordinates outside range and delete (in source and target)
     to_delete = []
     for i in range(im_new_rows * im_new_cols):
-        if mapped_coordinate[0][i] < 0 or mapped_coordinate[0][i] > im_new_rows-1 or mapped_coordinate[1][i] < 0 or mapped_coordinate[0][i] > im_new_cols-1:
+        if mapped_coordinate[0][i] < 0 or mapped_coordinate[0][i] > im_new_rows-1 or mapped_coordinate[1][i] < 0 or mapped_coordinate[1][i] > im_new_cols-1:
             to_delete.append(i)
     to_delete=np.array(to_delete)
-    mapped_coordinate=np.delete(mapped_coordinate,to_delete,axis=1)
-    coordinates=np.delete(hom_coordinates, 2, 0)
-    coordinates=np.delete(coordinates,to_delete,axis=1)
+    coordinates = np.delete(hom_coordinates, 2, 0)
+    if len(to_delete)>0:
+        mapped_coordinate=np.delete(mapped_coordinate,to_delete,axis=1)
+        coordinates=np.delete(coordinates,to_delete,axis=1)
     # interpolate - bilinear
     #______________________________________ TODO:
     x_cordinates=mapped_coordinate[0,:]
@@ -86,7 +89,7 @@ def mapImage(im, T, sizeOutIm):
     orig_y = coordinates[1, :]
     orig_y=orig_y.astype(int)
     for i in range(len(orig_x)):
-        im_new[orig_x[i],orig_y[i]]=v[i]
+        im_new[orig_y[i],orig_x[i]]=v[i].astype(np.uint8)
     return im_new
 
 
