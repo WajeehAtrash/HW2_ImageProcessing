@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 
 
 
-# def writeMorphingVideo(image_list, video_name):
-#     out = cv2.VideoWriter(video_name+".mp4", cv2.VideoWriter_fourcc(*'MP4V'), 20.0, image_list[0].shape, 0)
-#     for im in image_list:
-#         out.write(im)
-#     out.release()
+def writeMorphingVideo(image_list, video_name):
+    out = cv2.VideoWriter(video_name+".mp4", cv2.VideoWriter_fourcc(*'MP4V'), 20.0, image_list[0].shape, 0)
+    for im in image_list:
+        out.write(im)
+    out.release()
 
 
 def createMorphSequence (im1, im1_pts, im2, im2_pts, t_list, transformType):
@@ -38,33 +38,56 @@ def mapImage(im, T, sizeOutIm):
 
     im_new = np.zeros(sizeOutIm)
     im_new_rows,im_new_cols=sizeOutIm[0],sizeOutIm[1]
-    T_inv=np.linalg.inv(T)
+    T_inv=np.linalg.pinv(T)
     # create meshgrid of all coordinates in new image [x,y]
-    x = np.arange(0,im_new_rows, 1)
-    y = np.arange(0, im_new_cols, 1)
-    mesh_gridx, mesh_gridy =np.meshgrid(x, y)
+    mesh_gridx, mesh_gridy =np.meshgrid(np.arange(0,im_new_rows, 1), np.arange(0, im_new_cols, 1))
     # add homogenous coord [x,y,1]
     mesh_gridx = mesh_gridx.ravel()
     mesh_gridy = mesh_gridy.ravel()
     ones_vec = np.ones((1, sizeOutIm[0] * sizeOutIm[1]))
     hom_coordinates=np.vstack((mesh_gridx,mesh_gridy,ones_vec))
-    hom_coordinates=np.transpose(hom_coordinates)
+
     # calculate source coordinates that correspond to [x,y,1] in new imag
-    mapped_coordinate=np.matmul(hom_coordinates,T_inv)
+    mapped_coordinate=np.matmul(T_inv,hom_coordinates)
+    mapped_coordinate[0,:]=mapped_coordinate[0,:]/mapped_coordinate[2,:]
+    mapped_coordinate[1, :] = mapped_coordinate[1, :] / mapped_coordinate[2, :]
+    mapped_coordinate = np.delete(mapped_coordinate, 2, 0)
     # find coordinates outside range and delete (in source and target)
-    mapped_coordinate[:,0]=mapped_coordinate[:,0]/mapped_coordinate[:,2]
-    mapped_coordinate[:, 1] = mapped_coordinate[:, 1] / mapped_coordinate[:, 2]
-    mapped_coordinate[:, 2] = mapped_coordinate[:, 2] / mapped_coordinate[:, 2]
-    print(np.any(mapped_coordinate[:,0]<-4))
-    # mapped_coordinate=np.delete(mapped_coordinate,np.any(mapped_coordinate[:,0]<-4),axis=0)
-    print(np.all(mapped_coordinate))
-    input()
-
+    to_delete = []
+    for i in range(im_new_rows * im_new_cols):
+        if mapped_coordinate[0][i] < 0 or mapped_coordinate[0][i] > im_new_rows-1 or mapped_coordinate[1][i] < 0 or mapped_coordinate[0][i] > im_new_cols-1:
+            to_delete.append(i)
+    to_delete=np.array(to_delete)
+    mapped_coordinate=np.delete(mapped_coordinate,to_delete,axis=1)
+    coordinates=np.delete(hom_coordinates, 2, 0)
+    coordinates=np.delete(coordinates,to_delete,axis=1)
     # interpolate - bilinear
-
-
+    #______________________________________ TODO:
+    x_cordinates=mapped_coordinate[0,:]
+    y_cordinates=mapped_coordinate[1,:]
+    x_left=np.floor(x_cordinates).astype(int)
+    x_right=np.ceil(x_cordinates).astype(int)
+    y_top=np.floor(y_cordinates).astype(int)
+    y_bottom=np.ceil(y_cordinates).astype(int)
+    delta_x=x_cordinates-x_left
+    delta_y=y_cordinates-y_top
+    NW=im[x_left,y_top]
+    SW=im[x_left,y_bottom]
+    NE=im[x_right,y_top]
+    SE=im[x_right,y_bottom]
+    S=SE*delta_x+SW*(1-delta_x)
+    N=NE*delta_x+NW*(1-delta_x)
+    v=N*delta_y+S*(1-delta_y)
+    #_____________________________________
     # apply corresponding coordinates
     # new_im [ target coordinates ] = old_im [ source coordinates ]
+    orig_x=coordinates[0,:]
+    orig_x=orig_x.astype(int)
+    orig_y = coordinates[1, :]
+    orig_y=orig_y.astype(int)
+    for i in range(len(orig_x)):
+        im_new[orig_x[i],orig_y[i]]=v[i]
+    return im_new
 
 
 
@@ -134,6 +157,7 @@ def getImagePts(im1, im2,varName1,varName2, nPoints):
     plt.title("first image points selection")
     plt.imshow(im1, cmap='gray', vmin=0, vmax=255)
     imagePts1 = plt.ginput(n=nPoints,show_clicks=True)
+    imagePts1 =[(t[1], t[0]) for t in imagePts1]
     plt.figure()
     plt.title("second image points selection")
     plt.imshow(im2, cmap='gray', vmin=0, vmax=255)
