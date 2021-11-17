@@ -89,7 +89,7 @@ def mapImage(im, T, sizeOutIm):
     orig_y = coordinates[1, :]
     orig_y=orig_y.astype(int)
     for i in range(len(orig_x)):
-        im_new[orig_y[i],orig_x[i]]=v[i].astype(np.uint8)
+        im_new[orig_x[i],orig_y[i]]=v[i]
     return im_new
 
 
@@ -165,6 +165,7 @@ def getImagePts(im1, im2,varName1,varName2, nPoints):
     plt.title("second image points selection")
     plt.imshow(im2, cmap='gray', vmin=0, vmax=255)
     imagePts2 = plt.ginput(n=nPoints,show_clicks=True)
+    imagePts2 = [(t[1], t[0]) for t in imagePts2]
     ones=np.ones((nPoints,1))
     imagePts1 = np.round(imagePts1)
     imagePts2 = np.round(imagePts2)

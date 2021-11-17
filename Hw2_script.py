@@ -17,7 +17,8 @@ if __name__ == "__main__":
     # plt.title("our shit")
     # plt.imshow(image, cmap='gray', vmin=0, vmax=255)
     # plt.show()
-    ims=createMorphSequence(face1_gray,pointsSet1,face2_gray,pointsSet2,[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1],1)
+    T=np.arange(0,1,0.1)
+    ims=createMorphSequence(face1_gray,pointsSet1,face2_gray,pointsSet2,T,0)
     for i in range(len(ims)):
         plt.figure()
         plt.title("our shit")
