@@ -17,11 +17,10 @@ if __name__ == "__main__":
     # plt.title("our shit")
     # plt.imshow(image, cmap='gray', vmin=0, vmax=255)
     # plt.show()
-    T=np.arange(0,1,0.1)
-    ims=createMorphSequence(face1_gray,pointsSet1,face2_gray,pointsSet2,T,0)
-    for i in range(len(ims)):
-        plt.figure()
-        plt.title("our shit")
-        plt.imshow(ims[i], cmap='gray', vmin=0, vmax=255)
-        plt.show()
+    ims=createMorphSequence(face1_gray,pointsSet1,face2_gray,pointsSet2,np.linspace(0,1,100) ,0)
+    # for i in range(len(ims)):
+    #     plt.figure()
+    #     plt.title("our shit")
+    #     plt.imshow(ims[i], cmap='gray', vmin=0, vmax=255)
+    #     plt.show()
     writeMorphingVideo(ims,'oushitVideo')

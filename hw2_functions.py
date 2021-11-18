@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 def writeMorphingVideo(image_list, video_name):
-    out = cv2.VideoWriter(video_name+".mp4", cv2.VideoWriter_fourcc(*'MP4V'), 20.0, image_list[0].shape, 0)
+    out = cv2.VideoWriter(video_name+".mp4", cv2.VideoWriter_fourcc(*'mp4v'), 20.0, image_list[0].shape, 0)
     for im in image_list:
         out.write(im)
     out.release()
@@ -26,11 +26,11 @@ def createMorphSequence (im1, im1_pts, im2, im2_pts, t_list, transformType):
         # TODO: calculate nim for each t
         T12_t=(1-t)*np.eye(3)+t*T12
         T21_t=(1-t)*T21+t*np.eye(3)
-        im1_row,im1_col=im1.shape
-        im2_row, im2_col = im2.shape
-        newIm1=mapImage(im1,T12_t,[im2_row,im2_col])
-        newIm2=mapImage(im2,T21_t,[im1_row,im1_col])
-        nim=t*newIm1+(1-t)*newIm2
+        # im1_row,im1_col=im1.shape
+        # im2_row, im2_col = im2.shape
+        newIm1=mapImage(im1,T12_t,im2.shape)
+        newIm2=mapImage(im2,T21_t,im1.shape)
+        nim=np.uint8(t*newIm1+(1-t)*newIm2)
         ims.append(nim)
     return ims
 
@@ -89,7 +89,8 @@ def mapImage(im, T, sizeOutIm):
     orig_y = coordinates[1, :]
     orig_y=orig_y.astype(int)
     for i in range(len(orig_x)):
-        im_new[orig_x[i],orig_y[i]]=v[i]
+        im_new[orig_x[i],orig_y[i]]=v[i].astype(int)
+    im_new=im_new.astype(int)
     return im_new
 
 
