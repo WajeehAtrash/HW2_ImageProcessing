@@ -30,7 +30,7 @@ def createMorphSequence (im1, im1_pts, im2, im2_pts, t_list, transformType):
         # im2_row, im2_col = im2.shape
         newIm1=mapImage(im1,T12_t,im2.shape)
         newIm2=mapImage(im2,T21_t,im1.shape)
-        nim=np.uint8(t*newIm1+(1-t)*newIm2)
+        nim=np.uint8(t*newIm2+(1-t)*newIm1)
         ims.append(nim)
     return ims
 
